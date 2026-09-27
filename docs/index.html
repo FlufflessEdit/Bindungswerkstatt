@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Die Bindungswerkstatt</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="bg-dark">
+    <div id="wrap"><canvas id="stage"></canvas></div>
+
+    <div id="bar">
+      <input
+        id="formulaInput"
+        type="text"
+        spellcheck="false"
+        placeholder="Formel oder Name … z. B. C₆H₆, Ethanol"
+        aria-label="Chemische Formel oder IUPAC-Name" />
+
+      <div class="dropdown" id="presetDrop">
+        <button type="button" id="presetBtn">Beispiele</button>
+        <div class="drop-list" id="formulaPresets"></div>
+      </div>
+
+      <button type="button" id="btnPse" class="icon-btn" title="Kamera: Periodensystem + Bühne">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6" />
+        </svg>
+      </button>
+      <button type="button" id="btnDi" class="icon-btn on" title="H, N, O, F, Cl … als Zweiatom-Molekül spawnen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <circle cx="7" cy="12" r="4" />
+          <circle cx="17" cy="12" r="4" />
+          <path d="M11 12h2" />
+        </svg>
+      </button>
+      <button type="button" id="btnCut" class="icon-btn" title="Trennmodus: einzeln greifen, Bindungen reißen früher">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <circle cx="6" cy="6.5" r="2.6" />
+          <circle cx="6" cy="17.5" r="2.6" />
+          <path d="M8.3 8.2 20 19M8.3 15.8 20 5" />
+        </svg>
+      </button>
+      <button type="button" id="btnClear" class="icon-btn" title="Bühne leeren">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 7h16M9.5 7V4h5v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5" />
+        </svg>
+      </button>
+      <button type="button" id="btnBg" class="icon-btn" title="Hintergrund: dunkel / transparent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <circle cx="12" cy="12" r="8" />
+          <path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none" />
+        </svg>
+      </button>
+      <button type="button" id="btnHelp" class="icon-btn" title="Hilfe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <circle cx="12" cy="12" r="8.5" />
+          <path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.9c-.7.4-1 .9-1 1.7" />
+          <circle cx="12" cy="16.8" r=".4" fill="currentColor" />
+        </svg>
+      </button>
+      <button type="button" id="btnFull" class="icon-btn" title="Vollbild">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+        </svg>
+      </button>
+    </div>
+
+    <div id="statusBar" class="status"></div>
+
+    <div id="cutChip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="6" cy="6.5" r="2.6" />
+        <circle cx="6" cy="17.5" r="2.6" />
+        <path d="M8.3 8.2 20 19M8.3 15.8 20 5" />
+      </svg>
+      Trennmodus – Bindungen reißen ab 1,5-facher Dehnung
+    </div>
+
+    <div id="overlay">
+      <div class="karte">
+        <button type="button" id="btnCloseHelp" class="icon-btn" title="Schließen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
+        </button>
+        <h2>So funktioniert die Werkstatt</h2>
+        <h3>Navigation</h3>
+        <p>
+          <strong>Ziehen:</strong> eine Hand/Maus auf freier Fläche verschiebt die Ansicht. <strong>Touch:</strong> zwei Finger verschieben, Pinch
+          zoomt. Mausrad zoomt ebenfalls.
+        </p>
+        <h3>Atome holen</h3>
+        <p>
+          Element im Periodensystem anklicken. H, N, O, F, Cl, Br, I kommen (bei aktivem Molekül-Button) direkt als Zweiatom-Molekül. Doppelklick auf
+          ein Kästchen nimmt versehentliche Doppel-Spawns zurück.
+        </p>
+        <h3>Bindungen bauen</h3>
+        <p>
+          Atom greifen und auf ein anderes ziehen – <strong>bei Berührung verbinden sie sich von selbst</strong>, in der stärksten sinnvollen Ordnung
+          (C+O → Doppelbindung, N+N → Dreifachbindung). Ziehen bewegt immer den ganzen Molekülverband.
+        </p>
+        <h3>Ionen</h3>
+        <p>
+          Metall auf Nichtmetall ziehen: Elektronen springen sichtbar über (auch Fe₂O₃, CuO …). Gleichnamige Ionen stoßen sich ab, ungleichnamige
+          ziehen sich an.
+        </p>
+        <h3>Löschen &amp; Trennen</h3>
+        <p>
+          <strong>Doppelklick oder Doppeltap auf ein Atom löscht es</strong> (Rechtsklick ebenfalls). Bindungen reißen bei starker Überdehnung; im
+          Trennmodus (Schere) greifst du nur einzelne Atome und Bindungen reißen früher. Eine neue Formel leert die Bühne automatisch.
+        </p>
+        <h3>Formeln</h3>
+        <p>
+          Eingeben und Enter — inklusive <strong>Ringen</strong> (C₆H₆ Benzol, S₈, C₅H₅⁻) und Ionenverbindungen (NaCl, Fe₂O₃, Al₂O₃).
+          Elektronen-Experiment: Klick auf einen leeren Schalenplatz setzt ein Elektron, Klick auf ein freies entfernt es.
+        </p>
+        <h3>Organische Namen (IUPAC)</h3>
+        <p>
+          Deutsche Namen werden erkannt: <em>Ethan, But-2-en, Propan-2-ol, Butanal, Cyclohexan, Benzol, Toluol, Phenol, Benzaldehyd</em> … Isomere
+          gibst du über Positionen an: <em>2-Methylpropan</em>, <em>2,2-Dimethylbutan</em>, <em>But-1-en</em>. Trivialnamen wie
+          <em>Aceton, Essigsäure, Formaldehyd, Isobutan, Acetylen, Glycol</em> funktionieren ebenfalls. Mehrdeutige Summenformeln (z. B. C₂H₆O) werden
+          bewusst abgelehnt – Isomerie! Äther und Ester (Sauerstoff mitten in der Kette) werden noch nicht unterstützt.
+        </p>
+        <h3>Farblegende</h3>
+        <div class="legende" id="legende"></div>
+        <h3>Die Kästchen im Periodensystem</h3>
+        <div class="zelle-legende">
+          <div class="zelle-beispiel">
+            <span class="zl-z">1</span>
+            <span class="zl-en">2,20</span>
+            <span class="zl-sym">H</span>
+            <span class="zl-name">Wasserstoff</span>
+            <span class="zl-ox">+1 / −1</span>
+          </div>
+          <ul class="zl-liste">
+            <li><code>1</code>Ordnungszahl — oben links, fett</li>
+            <li><code>2,20</code>Elektronegativität — darunter</li>
+            <li><code>H</code>Elementsymbol — rechts daneben</li>
+            <li><code>Wasserstoff</code>deutscher Name — unter dem Symbol</li>
+            <li><code>+1 / −1</code>häufigste Oxidationszahlen — darunter</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="toasts" aria-live="polite"></div>
+
+    <script src="pse.js"></script>
+    <script src="lewis.js"></script>
+    <script src="organik.js"></script>
+    <script src="modell.js"></script>
+    <script src="physics.js"></script>
+    <script src="render.js"></script>
+    <script src="ui.js"></script>
+    <script>
+      (function () {
+        var leg = document.getElementById("legende");
+        Object.keys(CATS).forEach(function (k) {
+          var d = document.createElement("div");
+          var s = document.createElement("span");
+          s.style.background = CATS[k].c;
+          d.appendChild(s);
+          d.appendChild(document.createTextNode(CATS[k].label));
+          leg.appendChild(d);
+        });
+      })();
+    </script>
+  </body>
+</html>
